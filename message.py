@@ -1,8 +1,7 @@
-from Crypto.PublicKey import RSA
+from Crypto.PublicKey import RSA as RSAc
 from Crypto.Hash import MD5
-from stem.control import Controller
-
-import hashlib, base64
+import StringIO
+from M2Crypto import RSA as RSAm
 
 class Message():
 	def setSender(self,sender):
@@ -13,19 +12,22 @@ class Message():
 		return self.body
 	def sign(self, privKey):
 		with open(privKey, 'r') as keyfile:
-			key = RSA.importKey(keyfile.read())
+			key = RSAc.importKey(keyfile.read())
 			hash = MD5.new(self.body).digest()
 			signature = key.sign(hash,'')
 			self.signature = signature
-	def checkSignature(self):
-		key = RSA.importKey(self.pubkey)
-		status = key.verify(MD5.new(self.body).digest(), self.signature)
-		print(base64.b32encode(hashlib.sha1(key.exportKey(format='DER')).digest()[:10]).lower())
-		return status
-
+			try:
+				self.pubkey = key.publickey().exportKey(format='PEM')
+			except Exception as e:
+				print(e)
 if __name__== '__main__':
-	location = '/var/lib/tor/'
+	location = 'C:\Users\Martin\Tor\HiddenService\private_key'
 	m = Message()
 	m.setBody('hello world!')
 	m.sign(location)
-	print(m.signature)
+	out = StringIO.StringIO()
+	k = RSAm.load_key(location)
+	RSAm.save_pb_key(k)
+	print('jo')
+	
+	
