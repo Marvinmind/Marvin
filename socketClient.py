@@ -37,12 +37,12 @@ class MarvinSock():
 		with open(path,'r') as f:
 			self.HS_ID = f.read().split('.')[0]
 		try:
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			res = s.connect_ex((self.HOST, self.PORT))
+			self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			res = self.s.connect_ex((self.HOST, self.PORT))
 			if res!=0:
-				s.bind((self.HOST, self.PORT))
-				s.listen(1)
-				s, addr = s.accept()
+				self.s.bind((self.HOST, self.PORT))
+				self.s.listen(1)
+				self.s, addr = self.s.accept()
 		finally:
 			pass
 		#finally:	
@@ -50,7 +50,7 @@ class MarvinSock():
 		#	s.close()
 		#	tor_process.kill() 
 	def receive_message(self):
-		d =s.recv(32)
+		d =self.s.recv(32)
 		if len(d)==0:
 			return
 		messageLen = int(d[:4].decode('ascii'))
@@ -58,7 +58,7 @@ class MarvinSock():
 		messageLen = int(messageLen)
 		while 1:
 			if len(d)<messageLen:
-				d+=s.recv(min(1024, messageLen-len(d)))
+				d+=self.s.recv(min(1024, messageLen-len(d)))
 			else:
 				break
 		if '---stop---' == d:
@@ -66,8 +66,7 @@ class MarvinSock():
 		message = pickle.loads(d)
 		return message
 
-	def send_message(self, message):
-		m_in = input()
+	def send_message(self, m_in):
 		if m_in == '---stop---':
 			s.sendall(m_in)
 			return
@@ -81,7 +80,7 @@ class MarvinSock():
 		if len(length) > 4:
 			raise Exception('MessageLenException', 'this message is too long')
 		length = ''.join(['0' for x in range(4-len(length))])+length
-		s.sendall(length.encode('ascii')+output)
+		self.s.sendall(length.encode('ascii')+output)
 
 	def send_worker(self):
 		while 1:
@@ -89,19 +88,24 @@ class MarvinSock():
 			if m == '---end---':
 				kill_sock()
 			else:
-				send_message(m)
+				self.send_message(m)
 	def receive_worker(self):
 		while 1:
-			m = receive_message()
+			m = self.receive_message()
 			if m == '---end---':
 				kill_sock()
-			print(message.body)
+			print(m.body)
 	def kill_sock(self):
-		s.shutdown(socket.SHUT_RDWR)
-		s.close()
+		self.s.shutdown(socket.SHUT_RDWR)
+		self.s.close()
 
 
 if __name__ == '__main__':
 	marvsock = MarvinSock(int(sys.argv[1]))
-	t_rec = Thread(target=receive_worker)
-	r_send = Thread(target=send_worker)
+	t_rec = Thread(target=marvsock.receive_worker)
+	r_send = Thread(target=marvsock.send_worker)
+	threads = [t_rec, r_send]
+	for t in threads:
+		t.start()
+	for x in threads: 
+		x.join()

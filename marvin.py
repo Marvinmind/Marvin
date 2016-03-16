@@ -36,7 +36,7 @@ class Ui_Marvin(object):
     def retranslateUi(self, Marvin):
         _translate = QtCore.QCoreApplication.translate
         Marvin.setWindowTitle(_translate("Marvin", "Marvin"))
-        self.pushButton.setText(_translate("Marvin", "PushButton"))
+        self.pushButton.setText(_translate("Marvin", "Send"))
 
 
 if __name__ == "__main__":
