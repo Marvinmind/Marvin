@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>Marvin</class>
- <widget class="QWidget" name="Marvin">
+ <widget class="QMainWindow" name="Marvin">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -13,11 +13,12 @@
   <property name="windowTitle">
    <string>Marvin</string>
   </property>
+  <widget class="QWidget" name="centralwidget">
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QListWidget" name="listWidget"/>
+      <widget class="QListView" name="listView"/>
      </item>
     </layout>
    </item>
@@ -36,6 +37,24 @@
     </layout>
    </item>
   </layout>
+    <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuZgzgzggzgzgzgzg">
+    <property name="title">
+     <string>zgzgzggzgzgzgzg</string>
+    </property>
+   </widget>
+   <addaction name="menuZgzgzggzgzgzgzg"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+</widget>
  </widget>
  <resources/>
  <connections/>

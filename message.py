@@ -2,37 +2,40 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import MD5
 import hashlib,  base64
 
-KEY_LOCATION = '/var/lib/tor/other_hidden_service/private_key'
-
-
+class MessageCreator():
+	def __init__(self,location):
+		self.SERVICE_LOCATION = location
+		with open(self.SERVICE_LOCATION+'/hostname','r') as f:
+			self.sender = f.read().split('.')[0]
+		with open(self.SERVICE_LOCATION+'/private_key','r') as k:
+			self.key = RSA.importKey(k.read())
+	def buildMessage(self, in_text):
+		m = Message(in_text, self.key, self.sender)
+		return m
 class Message():
-	def setSender(self,sender):
+	def __init__(self, in_text, key, sender):
+		self.body = in_text
 		self.sender = sender
-	def setBody(self, message):
-		self.body = message
-	def getBody():
-		return self.body
-	def sign(self):
-		with open(KEY_LOCATION, 'r') as keyfile:
-			key = RSA.importKey(keyfile.read())
-			hash = MD5.new(self.body.encode('utf-8')).digest()
-			signature = key.sign(hash,'')
-			self.signature = signature
-			try:
-				self.pubkey = key.publickey().exportKey(format='PEM')
-			except Exception as e:
-				print(e)
-	def checkSignature(self):
+		hash = MD5.new(self.body.encode('utf-8')).digest()
+		self.signature = key.sign(hash,'')
+		self.pubkey = key.publickey().exportKey(format='PEM')
+	
+	def verify(self):
 		key = RSA.importKey(self.pubkey)
 		sigStatus = key.verify(MD5.new(self.body.encode('utf-8')).digest(), self.signature)
 		calcID = base64.b32encode(hashlib.sha1(key.exportKey(format='DER')[22:]).digest()[:10]).lower().decode('ascii')
 		print(calcID)
-		return (calcID == self.sender) and sigStatus
+		if (calcID == self.sender) and sigStatus:
+			return 'VERIFIED'
+		else:
+			return 'NOT VERIFIED'
+
 if __name__== '__main__':
-#	location = '/var/lib/tor/other_hidden_service/private_key'
-	m = Message()
-	m.setBody('hello world!')
-#	m.sign(location)
+	location = '/var/lib/tor/other_hidden_service'
+	gen = MessageCreator(location)
+	m = gen.buildMessage('hello world!')
+
+	print(m.verify())
 
 	
 	

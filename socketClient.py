@@ -2,7 +2,7 @@
 import socket
 import stem.process
 from stem.util import term
-from message import Message
+from message import Message, MessageCreator
 import pickle
 import sys
 from threading import Thread
@@ -28,14 +28,14 @@ def print_bootstrap_lines(line):
 class MarvinSock():
 	def __init__(self, flav):
 		self.HOST = 'localhost'    # The remote host
-		self.PORT = 55555      # The same port as used by the server
-		
+		self.PORT = 55555      # The same port as used by the server		
 		if flav == 1:
-			path = '/var/lib/tor/other_hidden_service/hostname'
+			self.path = '/var/lib/tor/other_hidden_service'
 		else:
-			path = '/var/lib/tor/hidden_service/hostname'
-		with open(path,'r') as f:
-			self.HS_ID = f.read().split('.')[0]
+			self.path = '/var/lib/tor/hidden_service'
+
+		self.gen = MessageCreator(self.path)
+
 		try:
 			self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			res = self.s.connect_ex((self.HOST, self.PORT))
@@ -70,10 +70,7 @@ class MarvinSock():
 		if m_in == '---stop---':
 			s.sendall(m_in)
 			return
-		message = Message()
-		message.setBody(m_in)
-		message.setSender(self.HS_ID)
-		message.sign()
+		message = self.gen.buildMessage(m_in)
 		output = pickle.dumps(message, -1)
 		#calculate length of message and pad to four digits
 		length = str(len(output))
