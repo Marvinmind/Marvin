@@ -6,45 +6,47 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>372</width>
+    <height>422</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="pushButton">
-    <property name="geometry">
-     <rect>
-      <x>170</x>
-      <y>70</y>
-      <width>91</width>
-      <height>27</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>PushButton</string>
-    </property>
-   </widget>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QListWidget" name="listWidget"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>372</width>
      <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuZgzgzggzgzgzgzg">
     <property name="title">
-     <string>zgzgzggzgzgzgzg</string>
+     <string>Menu</string>
     </property>
+    <addaction name="actionEdit_contacts"/>
    </widget>
    <addaction name="menuZgzgzggzgzgzgzg"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionEdit_contacts">
+   <property name="text">
+    <string>Edit contacts</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

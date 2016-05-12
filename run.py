@@ -3,32 +3,78 @@ from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from marvin import Ui_Marvin
 from test import Ui_MainWindow
-from socketClient import MarvinSock
+from socketClient import ServerSock, ClientSock
 from threading import Thread
+from contacts import Contacts
 import atexit
-import message
+from messageSimple import Message
+from queue import Queue
 
 class RecThread(QThread):
-	receive_signal = pyqtSignal(message.Message)
-	def __init__(self):
+	receive_signal = pyqtSignal(Message)
+	def __init__(self, sock):
 		QThread.__init__(self)
+		self.sock = sock
+	def run(self):
+		while 1:
+			m = self.sock.receive_message()
+			if m:
+				print('emit message')
+				self.receive_signal.emit(m)
+
+class SendThread(QThread):
+	def __init__(self, sock, queue):
+		QThread.__init__(self)
+		self.sock = sock
+		self.queue = queue
+	def run(self):
+		while 1:
+			val= self.queue.get()
+			if val is not None:
+				self.sock.send_message(val)
+
+class ListenThread(QThread):
+	incoming_connection_signal = pyqtSignal(ClientSock)
+	def __init__(self, port):
+		QThread.__init__(self)
+		self.serverSock = ServerSock(port)
 
 	def run(self):
 		while 1:
-			m = socket.receive_message()
-			self.receive_signal.emit(m)
+			conn = self.serverSock.getConnection()
+			self.clientSock = ClientSock(serverPort)
+			self.clientSock.s = conn
+			print('connection established')
+			self.incoming_connection_signal.emit(self.clientSock)
+			#win = ConvWindow(socket=self.clientSock)
+			#win.show()
 
-class MyFirstGuiProgram(Ui_Marvin):
-	def __init__(self, dialog,socket):
-		Ui_Marvin.__init__(self)
-		self.setupUi(dialog)
-		# Connect "add" button with a custom function (addInputTextToListbox)
-		self.pushButton.clicked.connect(self.sendMessage)
-		self.pushButton.clicked.connect(self.lineEdit.clear)
 
-		self.get_thread = RecThread()
+class ConvWindow(QtWidgets.QMainWindow, Ui_Marvin):
+	def __init__(self, **kwargs):
+		super(ConvWindow, self).__init__(None)
+		self.setupUi(self)	
+
+		#Check if socket hat been given. If not create socket from address.
+		if 'socket' in kwargs:
+			print('socket transfered')
+			self.sock = kwargs['socket']
+		else:
+			self.sock = ClientSock(serverPort)
+			self.sock.connect(kwargs['addr'])
+
+		#Set up sender thread
+		self.queue = Queue()
+		self.send_thread = SendThread(self.sock, self.queue)
+		self.send_thread.start()
+
+		#Set up receiver thread
+		self.get_thread = RecThread(self.sock)
 		self.get_thread.start()
 		self.get_thread.receive_signal.connect(self.addToChat)
+
+		self.pushButton.clicked.connect(self.sendMessage)
+		self.pushButton.clicked.connect(self.lineEdit.clear)
 
 		self.chatListModel = QtGui.QStandardItemModel()
 		self.listView.setModel(self.chatListModel)
@@ -44,30 +90,61 @@ class MyFirstGuiProgram(Ui_Marvin):
 		item = QtGui.QStandardItem(str(message)+'\n')
 		item.setForeground(QtGui.QColor('blue'))
 		self.chatListModel.appendRow(item)
-		t = Thread(target=socket.send_message, args=(message,))
-		t.start()
+		self.queue.put(message)
 
-class Main(Ui_MainWindow):
-	def __init__(self, dialog):
-		self.setupUi.__init__(self)
-		self.setupUi(dialog)
-		self.pushButton.clicked.connect(self.openConversation)
+class Main(QtWidgets.QMainWindow, Ui_MainWindow):
+	def __init__(self):
+		super(Main, self).__init__(None)
+		self.setupUi(self)
 
-	def openConversation(self):
-		window = MyFirstGuiProgram(self)
-		window.show()
+		self.listenThread = ListenThread(serverPort)
+		self.listenThread.start()
+		self.listenThread.incoming_connection_signal.connect(lambda x: self.openConversation(sock=x))
+
+		self.convWindows = []
+		self.contacts = Contacts(clientNumber).contacts
+		for c in self.contacts:
+			el = ''
+			if 'name' in c:
+				el = c['name']
+			elif 'address' in c:
+				el = c['address']
+			if el != '':
+				item = self.listWidget.addItem(el)
+		self.listWidget.itemDoubleClicked.connect(lambda: self.openConversation(addr=c['address']))
+
+	def openConversation(self, **kwargs):
+		if 'sock' in kwargs:
+			self.win = ConvWindow(sock=kwargs['sock'])
+
+		elif 'addr' in kwargs:
+			if not kwargs['addr'] in self.convWindows:
+				addr = kwargs['addr']
+				self.convWindows.append(addr)
+				self.win = ConvWindow(addr=addr)
+				
+		self.win.show()
+
+	def openConversation2(self, item):
+			self.win= ConvWindow(socket=item)
+			self.win.show()
 
 if __name__ == '__main__':
-#	try:
+	try:
 		app = QtWidgets.QApplication(sys.argv)
-		dialog = QtWidgets.QMainWindow()
-	#	print(sys.argv[1])
-	#	socket = MarvinSock(int(sys.argv[1]))
-#		prog = MyFirstGuiProgram(dialog, socket)
-		prog = Main(dialog)
-		dialog.show()
+		clientNumber = int(sys.argv[1])
+
+		if clientNumber==1:
+			serverPort=5555
+		elif clientNumber == 2:
+			serverPort=5556
+		else:
+			serverPort=5557
+
+		prog = Main()
+		prog.show()
 		sys.exit(app.exec_())
-#	finally:
-#		if socket:
-#			socket.kill_sock()
-#atexit.register(socket.kill_sock())
+	finally	:
+		pass
+		#if socket:
+		#	socket.kill_sock()

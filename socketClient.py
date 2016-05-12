@@ -2,10 +2,11 @@
 import socket
 import stem.process
 from stem.util import term
-from message import Message, MessageCreator
+from messageSimple import Message, MessageCreator
 import pickle
 import sys
 from threading import Thread
+import time
 
 SOCKS_PORT = 7000
 
@@ -24,6 +25,8 @@ def print_bootstrap_lines(line):
 #  },
 #  init_msg_handler = print_bootstrap_lines,
 #)
+
+
 
 class MarvinSock():
 	def __init__(self, flav):
@@ -50,9 +53,10 @@ class MarvinSock():
 		#	s.close()
 		#	tor_process.kill() 
 	def receive_message(self):
-		d =self.s.recv(32)
+		d = self.s.recv(32)
 		if len(d)==0:
 			return
+		print('something came in')
 		messageLen = int(d[:4].decode('ascii'))
 		d = d[4:]
 		messageLen = int(messageLen)
@@ -67,16 +71,14 @@ class MarvinSock():
 		return message
 
 	def send_message(self, m_in):
-		if m_in == '---stop---':
-			s.sendall(m_in)
-			return
-		message = self.gen.buildMessage(m_in)
+		message = self.gen.buildMessage(m_in, self.sPort)
 		output = pickle.dumps(message, -1)
 		#calculate length of message and pad to four digits
 		length = str(len(output))
 		if len(length) > 4:
 			raise Exception('MessageLenException', 'this message is too long')
 		length = ''.join(['0' for x in range(4-len(length))])+length
+		print('goes out!')
 		self.s.sendall(length.encode('ascii')+output)
 
 	def send_worker(self):
@@ -96,6 +98,41 @@ class MarvinSock():
 		self.s.shutdown(socket.SHUT_RDWR)
 		self.s.close()
 
+class ClientSock(MarvinSock):
+	def __init__(self,sPort):
+		self.gen = MessageCreator(sPort)
+		self.sPort = sPort
+		
+	def connect(self, cPort):
+		self.cPort = cPort
+		try:
+			self.conStatus = 1
+			while self.conStatus != 0:
+				time.sleep(1)
+				self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				self.conStatus = self.s.connect_ex(('localhost', self.cPort))
+			return True
+		except Exception as e:
+			print(e)
+			self.kill_sock()
+
+
+class ServerSock(MarvinSock):
+	def __init__(self,port):
+		self.port = port
+		self.gen = MessageCreator(port)
+		try:
+			self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.s.bind(('localhost', self.port))
+			self.s.listen(5)
+		except Exception:
+			raise e
+
+	def getConnection(self):
+		print('wainting on port'+str(self.port))
+		conn, addr = self.s.accept()
+		print('connected on server from:'+str(addr))
+		return conn
 
 if __name__ == '__main__':
 	marvsock = MarvinSock(int(sys.argv[1]))

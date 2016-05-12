@@ -12,6 +12,7 @@ class MessageCreator():
 	def buildMessage(self, in_text):
 		m = Message(in_text, self.key, self.sender)
 		return m
+
 class Message():
 	def __init__(self, in_text, key, sender):
 		self.body = in_text
@@ -29,6 +30,20 @@ class Message():
 			return 'VERIFIED'
 		else:
 			return 'NOT VERIFIED'
+
+class MessageCreatorSimple():
+	def __init__(self,sender):
+		self.sender = sender
+	def buildMessage(self, in_text,sender):
+		m = Message(in_text, sender)
+
+class Message():
+	def __init__(self, in_text, sender):
+		self.body = in_text
+		self.sender = sender
+
+	def verify(self):
+		return 'VERIFIED'
 
 if __name__== '__main__':
 	location = '/var/lib/tor/other_hidden_service'

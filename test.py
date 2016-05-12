@@ -11,15 +11,20 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(372, 422)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(170, 70, 91, 27))
-        self.pushButton.setObjectName("pushButton")
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.listWidget = QtWidgets.QListWidget(self.centralwidget)
+        self.listWidget.setObjectName("listWidget")
+        self.verticalLayout.addWidget(self.listWidget)
+        self.horizontalLayout.addLayout(self.verticalLayout)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 20))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 372, 20))
         self.menubar.setObjectName("menubar")
         self.menuZgzgzggzgzgzgzg = QtWidgets.QMenu(self.menubar)
         self.menuZgzgzggzgzgzgzg.setObjectName("menuZgzgzggzgzgzgzg")
@@ -27,6 +32,9 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        self.actionEdit_contacts = QtWidgets.QAction(MainWindow)
+        self.actionEdit_contacts.setObjectName("actionEdit_contacts")
+        self.menuZgzgzggzgzgzgzg.addAction(self.actionEdit_contacts)
         self.menubar.addAction(self.menuZgzgzggzgzgzgzg.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -35,8 +43,8 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.pushButton.setText(_translate("MainWindow", "PushButton"))
-        self.menuZgzgzggzgzgzgzg.setTitle(_translate("MainWindow", "zgzgzggzgzgzgzg"))
+        self.menuZgzgzggzgzgzgzg.setTitle(_translate("MainWindow", "Menu"))
+        self.actionEdit_contacts.setText(_translate("MainWindow", "Edit contacts"))
 
 
 if __name__ == "__main__":
