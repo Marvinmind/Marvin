@@ -12,11 +12,12 @@ from queue import Queue
 
 
 class RecThread(QThread):
-
     receive_signal = pyqtSignal(Message)
+
     def __init__(self, sock):
         QThread.__init__(self)
         self.sock = sock
+
     def run(self):
         while 1:
             m = self.sock.receive_message()
@@ -39,6 +40,7 @@ class SendThread(QThread):
 
 
 class ListenThread(QThread):
+    #Define a signal that emits a new Client Sock
     incoming_connection_signal = pyqtSignal(ClientSock)
 
     def __init__(self, port):
@@ -51,7 +53,9 @@ class ListenThread(QThread):
             self.clientSock = ClientSock(serverPort)
             self.clientSock.s = conn
             print('connection established')
+
             self.incoming_connection_signal.emit(self.clientSock)
+
         #win = ConvWindow(socket=self.clientSock)
         #win.show()
 
@@ -130,10 +134,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.convWindows.append(addr)
                 self.win = ConvWindow(addr=addr)
 
-        self.win.show()
-
-    def openConversation2(self, item):
-        self.win= ConvWindow(socket=item)
         self.win.show()
 
 if __name__ == '__main__':

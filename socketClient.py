@@ -52,8 +52,8 @@ class MarvinSock():
         #	s.shutdown(socket.SHUT_RDWR)
         #	s.close()
         #	tor_process.kill()
-    def receive_message(self):
 
+    def receive_message(self):
         d = self.s.recv(32)
         if len(d)==0:
             return
@@ -99,19 +99,32 @@ class MarvinSock():
         self.s.shutdown(socket.SHUT_RDWR)
         self.s.close()
 
+
 class ClientSock(MarvinSock):
-    def __init__(self,sPort):
+    def __init__(self, sPort):
         self.gen = MessageCreator(sPort)
         self.sPort = sPort
 
     def connect(self, cPort):
         self.cPort = cPort
         try:
-            self.conStatus = 1
-            while self.conStatus != 0:
+            conStatus = 1
+            while conStatus != 0:
                 time.sleep(1)
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.conStatus = self.s.connect_ex(('localhost', self.cPort))
+                conStatus = self.s.connect_ex(('localhost', self.cPort))
+
+            newPort = self.s.recv(32)
+            newPort = newPort.decode('ascii')
+            print('new Port is:'+ newPort)
+            self.s.close()
+            conStatus = 1
+
+            while conStatus != 0:
+                time.sleep(1)
+                self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                conStatus = self.s.connect_ex(('localhost', int(newPort)))
+            print('leavin connection est')
             return True
         except Exception as e:
             print(e)
@@ -119,7 +132,15 @@ class ClientSock(MarvinSock):
 
 
 class ServerSock(MarvinSock):
-    def __init__(self,port):
+    nextPort = 5705
+
+    def get_Port(self):
+        return self._lastUsedPort
+
+    def set_Port(self, port):
+        self._lastUsedPort = port
+
+    def __init__(self, port):
         self.port = port
         self.gen = MessageCreator(port)
         try:
@@ -130,10 +151,19 @@ class ServerSock(MarvinSock):
             raise e
 
     def getConnection(self):
-        print('wainting on port'+str(self.port))
-        conn, addr = self.s.accept()
-        print('connected on server from:'+str(addr))
-        return conn
+        #try:
+            conn, addr = self.s.accept()
+            #Create new Socket for the interested party
+            temp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            temp_sock.bind(('localhost', ServerSock.nextPort))
+            conn.sendall(str(ServerSock.nextPort).encode('ascii'))
+            temp_sock.listen(10)
+            connTemp, addrTemp = temp_sock.accept()
+            ServerSock.nextPort+=1
+
+            #Kick party from server sock and reacreate sock
+            self.s.listen(5)
+            return connTemp
 
 if __name__ == '__main__':
     marvsock = MarvinSock(int(sys.argv[1]))
